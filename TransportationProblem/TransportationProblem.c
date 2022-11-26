@@ -23,7 +23,7 @@ int comp (const void *a, const void *b) {
 
 #define INF -999
 
-int potentials(int **input_array, int **plan, int m, int n) {
+int potentials(int **input_array, int **plan, int m, int n, int *supply, int *demand) {
 
     int u[m];
     int v[n];
@@ -61,7 +61,38 @@ int potentials(int **input_array, int **plan, int m, int n) {
 
     // вывод u, v
     #ifdef DEBUG
-        printf("\nu: ");
+        
+        printf("plan with potentials\n");
+        printf("s\\d\t");
+        for (int i = 0; i < n; i++) {
+            printf("%d\t", demand[i]);
+        }
+        printf("u\n");
+        for (int i = 0; i < n+1; i++) {
+            printf("---\t");
+        }
+        printf("---\n");
+
+        for (int i = 0; i < m; i++) {
+            printf("%2d|\t", supply[i]);
+            for (int j = 0; j < n; j++) {
+                char str[5];
+                if (plan[i][j] != 0) {
+                    sprintf(str, "%d", plan[i][j]);
+                } else {
+                    sprintf(str, "%c", '-');
+                }
+                printf("%s(%d)\t", str, input_array[i][j]);
+            }
+            printf("%d\n", u[i]);
+        }        
+
+        printf("v:|\t");
+        for (int i = 0; i < n; i++) {
+            printf("%d\t", v[i]);
+        }
+
+        printf("\n\nu: ");
 
         for (int i = 0; i < m; i++) {
             printf("%d ", u[i]);
@@ -95,7 +126,7 @@ int potentials(int **input_array, int **plan, int m, int n) {
 
     // вывод delta
     #ifdef DEBUG
-        printf("\n");
+        printf("\ndefects\n");
 
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
@@ -107,6 +138,15 @@ int potentials(int **input_array, int **plan, int m, int n) {
 
         if (opt_flag == 1) {
             printf("plan not optimal, continue!\n");
+            int res = 0;
+            for (int i = 0; i < m; i++) {
+                for (int j = 0; j < n; j++) {
+                    if (plan[i][j] != 0) {
+                        res = res + plan[i][j] * input_array[i][j];
+                    }
+                }
+            }
+            printf("Z = %d\n", res);
         } else {
             printf("plan optimal, done!\n");
             return 1;
@@ -168,15 +208,15 @@ int potentials(int **input_array, int **plan, int m, int n) {
         }
 
 
-        #ifdef DEBUG
-            printf("\n");
-            for (int i = 0; i < m+1; i++) {
-                for (int j = 0; j < n+1; j++) {
-                    printf("%d\t", plan[i][j]);
-                }
-                printf("\n");
-            }
-        #endif
+        // #ifdef DEBUG
+        //     printf("\n");
+        //     for (int i = 0; i < m+1; i++) {
+        //         for (int j = 0; j < n+1; j++) {
+        //             printf("%d\t", plan[i][j]);
+        //         }
+        //         printf("\n");
+        //     }
+        // #endif
 
 }
 
@@ -223,13 +263,25 @@ int planMatrix(int **input_array, int *supply, int *demand, int n, int m) {
     }
 
     #ifdef DEBUG    
-        printf("input plan\n");
-        for (int i = 0; i < m+1; i++) {
-            for (int j = 0; j < n+1; j++) {
-                printf("%d\t", plan[i][j]);
-            }
-            printf("\n");        
-        }
+        // printf("input plan\n");
+
+        // printf("s\\d\t");
+        // for (int i = 0; i < n; i++) {
+        //     printf("%d\t", demand[i]);
+        // }
+        // printf("\n");
+        // for (int i = 0; i < n+1; i++) {
+        //     printf("---\t");
+        // }
+        // printf("\n");
+
+        // for (int i = 0; i < m; i++) {
+        //     printf("%2d|\t", supply[i]);
+        //     for (int j = 0; j < n; j++) {
+        //         printf("%d\t", plan[i][j]);
+        //     }
+        //     printf("\n");        
+        // }
     #endif
 
     for (k = 0; k < m*n; k++) {
@@ -253,13 +305,26 @@ int planMatrix(int **input_array, int *supply, int *demand, int n, int m) {
     }
 
     #ifdef DEBUG
+        printf("\ninput plan\n");
+        printf("s\\d\t");
+        for (int i = 0; i < n; i++) {
+            printf("%d\t", demand[i]);
+        }
         printf("\n");
-        for (int i = 0; i < m+1; i++) {
-            for (int j = 0; j < n+1; j++) {
+        for (int i = 0; i < n+1; i++) {
+            printf("---\t");
+        }
+        printf("\n");
+
+        for (int i = 0; i < m; i++) {
+            printf("%2d|\t", supply[i]);
+            for (int j = 0; j < n; j++) {
                 printf("%d\t", plan[i][j]);
             }
             printf("\n");
-        }
+        }        
+
+        printf("\n");
     #endif
             
     int deg = 0;
@@ -277,8 +342,18 @@ int planMatrix(int **input_array, int *supply, int *demand, int n, int m) {
         // printf("continue..\n");
     } else {
         // вырожденный план
-        printf("degenerate matrix!\n");
-        exit(1);
+        printf("m + n - 1 != not empty\n");
+            int res = 0;
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (plan[i][j] != 0) {
+                    res = res + plan[i][j] * input_array[i][j];
+                }
+            }
+        }
+        printf("Z = %d\n", res);
+
+        // exit(1);
     }
 
     
@@ -286,37 +361,34 @@ int planMatrix(int **input_array, int *supply, int *demand, int n, int m) {
     int optimal = 0;
     do {
 
-        if (potentials(input_array, plan, m, n) == 1) {
+        if (potentials(input_array, plan, m, n, supply, demand) == 1) {
             printf("done\n");
             optimal = 1;
         }
-
-        #ifdef DEBUG    
-            for (int i = 0; i < m; i++) {
-                for (int j = 0; j < n; j++) {
-                    printf("%d\t", plan[i][j]);
-                }
-                printf("\n");        
-            }
-        #endif
-
-
     } while(!optimal);
     
 
     // *************************** Ответ ***************************
-    printf("optimal plan:\n");
-    for (int i = 0; i < m; i++) {
-        for (int j = 0; j < n; j++) {
-            printf("%d\t", plan[i][j]);
+        printf("s\\d\t");
+        for (int i = 0; i < n; i++) {
+            printf("%d\t", demand[i]);
         }
-        printf("%d\n", supply[i]);        
-    }
+        printf("\n");
+        for (int i = 0; i < n+1; i++) {
+            printf("---\t");
+        }
+        printf("\n");
 
-    for (int i = 0; i < m - 1; i++) {
-        printf("%d\t", demand[i]);
-    }
-    printf("\n");
+        for (int i = 0; i < m; i++) {
+            printf("%2d|\t", supply[i]);
+            for (int j = 0; j < n; j++) {
+                printf("%d\t", plan[i][j]);
+            }
+            printf("\n");
+        }        
+
+        printf("\n");
+    
 
     int res = 0;
     for (int i = 0; i < m; i++) {
@@ -346,7 +418,7 @@ int main(int argc, char *argv[]) {
     int **input;
     int *supply, *demand; // запасы, потребности
 
-    FILE *file = fopen("input1.txt", "r");
+    FILE *file = fopen("input8.txt", "r");
     if (file == NULL) {
         printf("error reading file!\n");
         exit(1);
@@ -380,17 +452,25 @@ int main(int argc, char *argv[]) {
 
     fclose(file);
 
-
-    // Вывод входных данных
-    for (int i = 0; i < m - 1; i++) {
-        for (int j = 0; j < n - 1; j++) {
-            printf("%d\t", input[i][j]);
-        }
-        printf("%d\n", supply[i]);        
-    }
+    printf("\ns\\d\t");
     for (int i = 0; i < n - 1; i++) {
         printf("%d\t", demand[i]);
     }
+    printf("\n");
+    for (int i = 0; i < n; i++) {
+        printf("---\t");
+    }
+    printf("\n");
+
+    // Вывод входных данных
+    for (int i = 0; i < m - 1; i++) {
+        printf("%2d|\t", supply[i]);        
+        for (int j = 0; j < n - 1; j++) {
+            printf("%d\t", input[i][j]);
+        }
+        printf("\n");
+    }
+
     printf("\n");
 
 
@@ -410,7 +490,7 @@ int main(int argc, char *argv[]) {
     }
 
     int total_cost = planMatrix(input, supply, demand, n-1, m-1);
-    printf("Z =  %d\n", total_cost);
+    printf("Z = %d\n", total_cost);
 
     for (int i = 0; i < m - 1; i++) {
         free(input[i]);
